@@ -49,7 +49,7 @@ router.delete('/:id', async (req, res)=>{
 router.get('/:id', async (req, res)=>{
     try{
         const user = await User.findById(req.params.id);
-        const {createdAt, updatedAt, isAdmin, password, ...other} = user._doc 
+        const {createdAt, updatedAt, isAdmin, password, __v, ...other} = user._doc 
         res.status(200).json(other)
     }catch(err){
         res.status(500).json(err);
@@ -62,15 +62,15 @@ router.put('/:id/follow', async(req, res)=>{
         try{
             const user = await User.findById(req.params.id);
             const me = await User.findById(req.body.userId);
-            if(!user.followers.includes(me._id)){
+            if(!user.followers.includes(req.body.userId)){
                 await user.updateOne({
                     $push: {
-                        followers: me._id
+                        followers: req.body.userId
                     }
                 });
                 await me.updateOne({
                     $push: {
-                        followings: user._id
+                        followings: req.params.id
                     }
                 })
                 res.status(200).json({
@@ -95,15 +95,15 @@ router.put('/:id/unfollow', async(req, res)=>{
         try{
             const user = await User.findById(req.params.id);
             const me = await User.findById(req.body.userId);
-            if(user.followers.includes(me._id)){
+            if(user.followers.includes(req.body.userId)){
                 await user.updateOne({
                     $pull: {
-                        followers: me._id
+                        followers: req.body.userId
                     }
                 });
                 await me.updateOne({
                     $pull: {
-                        followings: user._id
+                        followings: req.params.id
                     }
                 })
                 res.status(200).json({
@@ -112,13 +112,13 @@ router.put('/:id/unfollow', async(req, res)=>{
                     "status": "unfollow success"
                 })
             }else{
-                res.status(403).json("not followed")
+                res.status(403).json("already unfollowed")
             }
         }catch(err){
             res.status(500).json(err);
         }
     }else{
-        res.status(403).json("can't unfollow yourself");
+        res.status(403).json("can't follow yourself");
     }
 })
 
