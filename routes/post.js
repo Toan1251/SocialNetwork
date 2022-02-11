@@ -84,6 +84,21 @@ router.get("/:id", async(req, res)=>{
     }
 })
 //get timeline post
-
+router.get('/:id/timeline', async(req, res)=>{
+    try{
+        const user = await User.findById(req.params.id);
+        const userPosts = await Post.find({
+            userId: req.params.id
+        })
+        const followPosts = await Promise.all(
+            user.followings.map(id => {
+                return Post.find({userId: id});
+            })
+        )
+        res.status(200).json(userPosts.concat(followPosts))
+    }catch(err){
+        res.status(500).json(err);
+    }
+})
 
 module.exports = router
